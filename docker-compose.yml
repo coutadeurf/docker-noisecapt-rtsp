@@ -6,6 +6,7 @@ services:
     hostname: noisecapt
     restart: always
     devices:
+      # Not needed when capturing audio from an RTSP stream (see PF_RTSP_URL below):
       - /dev/snd:/dev/snd
 #    ports:
 #      - 30088:80
@@ -20,6 +21,12 @@ services:
       #- PF_AUDIOCARD=2
       #- PF_AUDIODEVICE=0
       #- PF_ALSA_MANUAL=ON
+      #
+      # To capture audio from an RTSP stream (e.g. an IP camera) instead of a local
+      # sound card, set PF_RTSP_URL and remove the /dev/snd device mapping above:
+      #- PF_RTSP_URL=rtsp://user:password@192.168.1.10:554/stream1
+      # RTSP transport: tcp (default) or udp
+      #- PF_RTSP_TRANSPORT=tcp
       # 
       # The following parameter configures if MP3 audio files are saved for the recordings.
       # WARNINGS !!! Recording MP3 audio files:

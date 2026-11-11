@@ -33,7 +33,8 @@ NOISECAPTDIR=/usr/share/noisecapt
 #
 # Get the card and device number from the .env file, or if not, extract it from arecord.
 # The $PF_ALSA_MANUAL variable indicates that the user has done their own settings and we shouldn't touch them
-if ! chk_enabled "$PF_ALSA_MANUAL"; then
+# If PF_RTSP_URL is set, the audio comes from an RTSP stream and there is no sound card to configure
+if [[ -z "$PF_RTSP_URL" ]] && ! chk_enabled "$PF_ALSA_MANUAL"; then
 		CARD="${PF_AUDIOCARD:-$(arecord --list-devices | sed  -n 's/.*card \([0-9][0-9]*\).*/\1/p')}"
 	if [[ -n "$CARD" ]]; then
 		# Figure out which NumID the mute button is unmute (which means set Mic Capture Switch = on):

@@ -12,11 +12,13 @@ RUN set -x && \
 # define packages needed for noisecapt:
     # JQ for JSON interpretation; lighttpd to present a website; alsa-utils to enable audio capture from soundcard
     # sox to create spectrograms and get the RMS audio levels; lame to encode in MP3
+    # ffmpeg to capture audio from an RTSP stream when PF_RTSP_URL is set
     KEPT_PACKAGES+=(jq) && \
     KEPT_PACKAGES+=(lighttpd) && \
     KEPT_PACKAGES+=(alsa-utils) && \
     KEPT_PACKAGES+=(sox) && \
     KEPT_PACKAGES+=(lame) && \
+    KEPT_PACKAGES+=(ffmpeg) && \
 #
 # Install all these packages:
     apt-get update && \
