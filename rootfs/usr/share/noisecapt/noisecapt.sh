@@ -64,15 +64,27 @@ LOG ()
 LOG "-----------------------------------------------------------------------------------"
 LOG "Starting NoiseCapt"
 
-# Try to get the card/device for the audio input device
-if [[ -z "$PF_AUDIOCARD" ]]; then
-    CARD="$(arecord -l |grep -oP "card\s+\K\w+")"
-    DEVICE="$(arecord -l |grep -oP "device\s+\K\w+")"
-    LOG "Audio device Card,Device auto-set to \"$CARD,$DEVICE\""
+# Determine the audio source: an RTSP stream if PF_RTSP_URL is set, otherwise a
+# local sound card. Both feed raw 48kHz mono signed 16-bit audio to sox below.
+if [[ -n "$PF_RTSP_URL" ]]; then
+    LOG "Audio source set to RTSP stream (transport ${PF_RTSP_TRANSPORT:-tcp})"
+    capture_audio() {
+        ffmpeg -hide_banner -loglevel error -rtsp_transport "${PF_RTSP_TRANSPORT:-tcp}" -i "$PF_RTSP_URL" -t "$CAPTURETIME" -vn -ac 1 -ar 48000 -f s16le - 2>/dev/null
+    }
 else
-    CARD=$PF_AUDIOCARD
-    DEVICE=$PF_AUDIODEVICE
-    LOG "Audio device Card,Device manually set to \"$CARD,$DEVICE\""
+    # Try to get the card/device for the audio input device
+    if [[ -z "$PF_AUDIOCARD" ]]; then
+        CARD="$(arecord -l |grep -oP "card\s+\K\w+")"
+        DEVICE="$(arecord -l |grep -oP "device\s+\K\w+")"
+        LOG "Audio device Card,Device auto-set to \"$CARD,$DEVICE\""
+    else
+        CARD=$PF_AUDIOCARD
+        DEVICE=$PF_AUDIODEVICE
+        LOG "Audio device Card,Device manually set to \"$CARD,$DEVICE\""
+    fi
+    capture_audio() {
+        arecord -D hw:"$CARD,$DEVICE" -d "$CAPTURETIME" --fatal-errors --buffer-size=192000 -f dat -t raw -c 1 --quiet 2>/dev/null
+    }
 fi
 
 # Calc how many records we need from the past logs
@@ -99,12 +111,12 @@ while true; do
     # All dB levels are dBFS, or dB where the loudest (="full scale") is 0 dB
 
     if chk_enabled "$RECORD_MP3"; then
-        RMSREC="$(arecord -D hw:"$CARD,$DEVICE" -d "$CAPTURETIME" --fatal-errors --buffer-size=192000 -f dat -t raw -c 1 --quiet 2>/dev/null \
+        RMSREC="$(capture_audio \
                   | tee >(lame --quiet -r --preset phone -s 48 - "${OUTFILE}recording-$(date -d @"$AUDIOTIME" +%y%m%d-%H%M%S).mp3" >/dev/null 2>&1) \
                   | sox -V -t raw -b 16 -r 48000 -c 1 -e signed-integer - -n sinc 200-10000 stats rate 16000 spectrogram -o "${OUTFILE}spectro-$(date -d @"$AUDIOTIME" +%y%m%d-%H%M%S).png"  -Z -10 -z 60 -t "Audio Spectrogram for $(date -d @"$AUDIOTIME")" -c "Planefence (C) 2020-2025 by kx1t" -p 1 2>&1 \
                   | grep 'RMS lev dB')"
     else
-        RMSREC="$(arecord -D hw:"$CARD,$DEVICE" -d "$CAPTURETIME" --fatal-errors --buffer-size=192000 -f dat -t raw -c 1 --quiet 2>/dev/null \
+        RMSREC="$(capture_audio \
                   | sox -V -t raw -b 16 -r 48000 -c 1 -e signed-integer - -n sinc 200-10000 stats rate 16000 spectrogram -o "${OUTFILE}spectro-$(date -d @"$AUDIOTIME" +%y%m%d-%H%M%S).png"  -Z -10 -z 60 -t "Audio Spectrogram for $(date -d @"$AUDIOTIME")" -c "Planefence (C) 2020-2025 by kx1t" -p 1 2>&1 \
                   | grep 'RMS lev dB')"
     fi
@@ -115,6 +127,8 @@ while true; do
     # check if $LEVEL is less than zero. If it's zero, there was a read error and we should skip.
     if [[ "$LEVEL" == "0" ]]; then
         "${s6wrap[@]}" echo "Zero sample - skipping"
+        # avoid a hot loop if the audio source failed instantly (e.g. RTSP connection refused)
+        sleep 5
         continue
     fi
 

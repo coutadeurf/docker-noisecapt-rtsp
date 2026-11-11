@@ -28,12 +28,8 @@
         - build_on_dep_container_update
   
   # Set workflow-wide environment variables
-  #  - REPO: repo name on dockerhub
-  #  - IMAGE: image name on dockerhub
   env:
-    DOCKERHUB_REPO: kx1t
-    DOCKERHUB_IMAGE: noisecapt
-    GHCR_IMAGE: kx1t/docker-noisecapt
+    GHCR_IMAGE: ${{ github.repository }}
     GHCR_REGISTRY: ghcr.io
   
   jobs:
@@ -70,9 +66,7 @@
       needs: [hadolint]
       with:
         push_enabled: true
-        push_destinations: ghcr.io;dockerhub
-        dockerhub_profile: kx1t #legacy
-        dockerhub_repo: noisecapt #legacy
+        push_destinations: ghcr.io
         ghcr_repo_owner: ${{ github.repository_owner }}
         ghcr_repo: ${{ github.repository }}
         platform_linux_arm32v6_enabled: false
@@ -88,5 +82,4 @@
         build_baseimage_url: :python/:python-test-pr
       secrets:
         ghcr_token: ${{ secrets.GITHUB_TOKEN }}
-        dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
   

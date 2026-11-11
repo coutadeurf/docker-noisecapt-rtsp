@@ -42,6 +42,22 @@ NoiseCapt continuously listen for, and processes audio from a soundcard. This ca
 
 ## Advanced configuration
 
+### Capturing audio from an RTSP stream (e.g. an IP camera)
+
+Instead of a local sound card, NoiseCapt can pull its audio from an RTSP stream (for example the audio channel of an IP camera) using ffmpeg. To enable this, set `PF_RTSP_URL` in the `environment:` section of your `docker-compose.yml`:
+
+    - PF_RTSP_URL=rtsp://user:password@camera.local:554/stream1
+
+Optionally, choose the RTSP transport (`tcp` is the default; use `udp` if your camera doesn't support TCP interleaved mode):
+
+    - PF_RTSP_TRANSPORT=tcp
+
+When `PF_RTSP_URL` is set:
+
+- the `devices: /dev/snd:/dev/snd` mapping in `docker-compose.yml` is no longer needed and can be removed
+- the ALSA mixer configuration (unmute / capture volume / AGC) is skipped automatically
+- audio is decoded to 48 kHz mono 16-bit, exactly like the sound card input, so levels, spectrograms and optional MP3 recordings work the same way
+
 ### Multiple audio cards, or no card found
 
 - NoiseCapt will attempt to automatically identify your audio card, but sometimes it can get confused. If you have multiple audio cards on your system (which is often the case on larger machines), it will pick the first one it can find. If this is not what you want, you can manually configure which audio card to pick. Here's how it works:
