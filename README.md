@@ -52,6 +52,11 @@ Optionally, choose the RTSP transport (`tcp` is the default; use `udp` if your c
 
     - PF_RTSP_TRANSPORT=tcp
 
+To avoid hanging forever on a stalled stream, ffmpeg gives up after `PF_RTSP_STIMEOUT` microseconds without data (default `5000000` = 5 s, passed to `-timeout` — formerly `-stimeout`, removed in ffmpeg 5) and is hard-killed by `timeout(1)` after `PF_RTSP_TIMEOUT` seconds (default `30`). On failure the capture loop skips the window and automatically retries at the next one:
+
+    - PF_RTSP_STIMEOUT=5000000
+    - PF_RTSP_TIMEOUT=30
+
 When `PF_RTSP_URL` is set:
 
 - the `devices: /dev/snd:/dev/snd` mapping in `docker-compose.yml` is no longer needed and can be removed

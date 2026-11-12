@@ -27,6 +27,10 @@ services:
       #- PF_RTSP_URL=rtsp://user:password@192.168.1.10:554/stream1
       # RTSP transport: tcp (default) or udp
       #- PF_RTSP_TRANSPORT=tcp
+      # RTSP timeouts: socket timeout in microseconds (default 5000000 = 5s without data)
+      # and hard kill of ffmpeg in seconds (default 30)
+      #- PF_RTSP_STIMEOUT=5000000
+      #- PF_RTSP_TIMEOUT=30
       # 
       # The following parameter configures if MP3 audio files are saved for the recordings.
       # WARNINGS !!! Recording MP3 audio files:
