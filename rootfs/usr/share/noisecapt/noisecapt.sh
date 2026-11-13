@@ -115,14 +115,22 @@ while true; do
     # capture audio and put the results in an array
     # All dB levels are dBFS, or dB where the loudest (="full scale") is 0 dB
 
+    # The spectrogram render is the most CPU-intensive part of each capture window.
+    # Set PF_SPECTROGRAM=off to skip it (RMS levels are still recorded and logged).
+    if chk_enabled "${PF_SPECTROGRAM:-on}"; then
+        SPECTRO_ARGS=(rate 16000 spectrogram -o "${OUTFILE}spectro-$(date -d @"$AUDIOTIME" +%y%m%d-%H%M%S).png" -Z -10 -z 60 -t "Audio Spectrogram for $(date -d @"$AUDIOTIME")" -c "Planefence (C) 2020-2025 by kx1t" -p 1)
+    else
+        SPECTRO_ARGS=()
+    fi
+
     if chk_enabled "$RECORD_MP3"; then
         RMSREC="$(capture_audio \
                   | tee >(lame --quiet -r --preset phone -s 48 - "${OUTFILE}recording-$(date -d @"$AUDIOTIME" +%y%m%d-%H%M%S).mp3" >/dev/null 2>&1) \
-                  | sox -V -t raw -b 16 -r 48000 -c 1 -e signed-integer - -n sinc 200-10000 stats rate 16000 spectrogram -o "${OUTFILE}spectro-$(date -d @"$AUDIOTIME" +%y%m%d-%H%M%S).png"  -Z -10 -z 60 -t "Audio Spectrogram for $(date -d @"$AUDIOTIME")" -c "Planefence (C) 2020-2025 by kx1t" -p 1 2>&1 \
+                  | sox -V -t raw -b 16 -r 48000 -c 1 -e signed-integer - -n highpass 200 lowpass 10000 stats "${SPECTRO_ARGS[@]}" 2>&1 \
                   | grep 'RMS lev dB')"
     else
         RMSREC="$(capture_audio \
-                  | sox -V -t raw -b 16 -r 48000 -c 1 -e signed-integer - -n sinc 200-10000 stats rate 16000 spectrogram -o "${OUTFILE}spectro-$(date -d @"$AUDIOTIME" +%y%m%d-%H%M%S).png"  -Z -10 -z 60 -t "Audio Spectrogram for $(date -d @"$AUDIOTIME")" -c "Planefence (C) 2020-2025 by kx1t" -p 1 2>&1 \
+                  | sox -V -t raw -b 16 -r 48000 -c 1 -e signed-integer - -n highpass 200 lowpass 10000 stats "${SPECTRO_ARGS[@]}" 2>&1 \
                   | grep 'RMS lev dB')"
     fi
     # put the dB value into LEVEL as an integer. BASH arithmatic doesn't like
@@ -218,8 +226,10 @@ while true; do
     printf "%s,%s,%s,%s,%s,%s\n" "$AUDIOTIME" "$LEVEL" "$ONEMINAVG" "$FIVEMINAVG" "$TENMINAVG" "$ONEHRAVG" >> "$LOGTODAY"
 
     # Link latest spectrogram to PNG files and recordingsto mp3 files
-    ln -sf "${OUTFILE}spectro-$(date -d @"$AUDIOTIME" +%y%m%d-%H%M%S).png" "${OUTFILE}spectro-latest.png"
-	ln -sf "${OUTFILE}spectro-$(date -d @"$AUDIOTIME" +%y%m%d-%H%M%S).png" "${OUTFILE}spectro-$AUDIOTIME.png"
+    if chk_enabled "${PF_SPECTROGRAM:-on}"; then
+        ln -sf "${OUTFILE}spectro-$(date -d @"$AUDIOTIME" +%y%m%d-%H%M%S).png" "${OUTFILE}spectro-latest.png"
+        ln -sf "${OUTFILE}spectro-$(date -d @"$AUDIOTIME" +%y%m%d-%H%M%S).png" "${OUTFILE}spectro-$AUDIOTIME.png"
+    fi
     ln -sf "${OUTFILE}recording-$(date -d @"$AUDIOTIME" +%y%m%d-%H%M%S).mp3" "${OUTFILE}recording-$AUDIOTIME.mp3"
     # LOG "ln -sf ${OUTFILE}pectro-$(date -d @"$AUDIOTIME" +%y%m%d-%H%M%S).png ${OUTFILE}/spectro-latest.png"
     # clean up any PNG spectrograms older than 12 hours (720 minutes):

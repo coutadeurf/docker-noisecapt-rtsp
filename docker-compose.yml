@@ -16,8 +16,12 @@ services:
       # If you make it more than 2 (hrs), you should also increase the tmpfs size
       # for /run
       - PF_DELETEAFTER=2
-      # This defines the capure time blocks, you shpuld probably leave this alone:
+      # This defines the capure time blocks, you shpuld probably leave this alone.
+      # Increase it (e.g. 10) to reduce CPU usage: fewer capture windows per hour.
       - PF_CAPTURETIME=5
+      # Set to off to skip the spectrogram PNG rendering (the most CPU-intensive
+      # step of each window). RMS noise levels are still recorded either way.
+      #- PF_SPECTROGRAM=on
       #- PF_AUDIOCARD=2
       #- PF_AUDIODEVICE=0
       #- PF_ALSA_MANUAL=ON

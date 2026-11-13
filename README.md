@@ -63,6 +63,14 @@ When `PF_RTSP_URL` is set:
 - the ALSA mixer configuration (unmute / capture volume / AGC) is skipped automatically
 - audio is decoded to 48 kHz mono 16-bit, exactly like the sound card input, so levels, spectrograms and optional MP3 recordings work the same way
 
+### Reducing CPU usage
+
+Each `PF_CAPTURETIME`-second window runs an ffmpeg decode plus a sox analysis. To lower CPU usage:
+
+- increase `PF_CAPTURETIME` (e.g. `10` instead of `5`) — fewer capture windows per hour, coarser time resolution on the noise graph
+- set `PF_SPECTROGRAM=off` to skip the spectrogram PNG rendering, the most expensive step of each window; RMS levels are still recorded and shown in PlaneFence
+- the sox band-limit filter uses cheap biquads (`highpass 200 lowpass 10000`) instead of the `sinc` FIR filter, with the same 200 Hz–10 kHz band
+
 ### Multiple audio cards, or no card found
 
 - NoiseCapt will attempt to automatically identify your audio card, but sometimes it can get confused. If you have multiple audio cards on your system (which is often the case on larger machines), it will pick the first one it can find. If this is not what you want, you can manually configure which audio card to pick. Here's how it works:
