@@ -29,6 +29,8 @@ services:
       # To capture audio from an RTSP stream (e.g. an IP camera) instead of a local
       # sound card, set PF_RTSP_URL and remove the /dev/snd device mapping above:
       #- PF_RTSP_URL=rtsp://user:password@192.168.1.10:554/stream1
+      # Only the audio track is pulled (-map 0:a:0): a video+audio stream (e.g. via
+      # go2rtc) then costs only its audio bitrate in network and CPU.
       # RTSP transport: tcp (default) or udp
       #- PF_RTSP_TRANSPORT=tcp
       # RTSP timeouts: socket timeout in microseconds (default 5000000 = 5s without data)

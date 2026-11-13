@@ -74,7 +74,7 @@ if [[ -n "$PF_RTSP_URL" ]]; then
         # kill after PF_RTSP_TIMEOUT seconds in case the socket timeout is not enough.
         # On failure the loop skips the window ("Zero sample") and retries automatically.
         timeout "${PF_RTSP_TIMEOUT:-30}" \
-            ffmpeg -hide_banner -loglevel error -rtsp_transport "${PF_RTSP_TRANSPORT:-tcp}" -timeout "${PF_RTSP_STIMEOUT:-5000000}" -i "$PF_RTSP_URL" -t "$CAPTURETIME" -vn -ac 1 -ar 48000 -f s16le - 2>/dev/null
+            ffmpeg -hide_banner -loglevel error -rtsp_transport "${PF_RTSP_TRANSPORT:-tcp}" -timeout "${PF_RTSP_STIMEOUT:-5000000}" -i "$PF_RTSP_URL" -map 0:a:0 -t "$CAPTURETIME" -vn -ac 1 -ar 48000 -f s16le - 2>/dev/null
     }
 else
     # Try to get the card/device for the audio input device

@@ -62,6 +62,7 @@ When `PF_RTSP_URL` is set:
 - the `devices: /dev/snd:/dev/snd` mapping in `docker-compose.yml` is no longer needed and can be removed
 - the ALSA mixer configuration (unmute / capture volume / AGC) is skipped automatically
 - audio is decoded to 48 kHz mono 16-bit, exactly like the sound card input, so levels, spectrograms and optional MP3 recordings work the same way
+- only the audio track of the RTSP stream is requested (`-map 0:a:0`): even if the stream also carries video (e.g. relayed by go2rtc), the server sends audio only, which keeps network traffic and CPU usage low
 
 ### Reducing CPU usage
 
